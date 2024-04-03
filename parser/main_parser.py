@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 
+from database import engine
+
 
 def create_database(page_number):
     end = True
@@ -12,6 +14,7 @@ def create_database(page_number):
         rosseti_url = "https://rosseti-lenenergo.ru/planned_work/?PAGEN_1={0}".format(
             page_number
         )
+        print(rosseti_url)
         with request.urlopen(rosseti_url) as rosseti_res:
             page = rosseti_res.read()
         soup = BeautifulSoup(page, 'lxml')
@@ -43,7 +46,7 @@ def create_database(page_number):
         page_number = page_number + 1
 
 
-def main():
+def main(connection):
     headers = [
         'region',
         'area',
@@ -63,9 +66,10 @@ def main():
         if len(row) == len(headers):
             length = len(mydata)
             mydata.loc[length] = row
-    mydata.to_csv('data/parser_data.csv', index=False)
+    mydata.to_sql('dataframe', con=connection, if_exists='replace')
 
 
 if __name__ == "__main__":
-    main()
+    with engine.connect() as conn:
+        main(conn)
 

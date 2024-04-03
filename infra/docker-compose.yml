@@ -1,0 +1,32 @@
+version: '3.12'
+
+services:
+  db:
+    container_name: bot_db
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./.env
+    image: postgres:15.2-alpine3.17
+
+  web:
+    build: ../api
+    command: "waitress-serve --call 'app:create_app'"
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - static_value:/app/data/
+
+  parser:
+    build: ../parser
+    restart: always
+    volumes:
+      - static_value:/app/data/
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+
+volumes:
+  static_value:

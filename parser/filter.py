@@ -4,13 +4,15 @@ from urllib.parse import quote
 from urllib import request
 import json
 
+from database import engine
 
-def date_filter(start_date):
+
+def date_filter(start_date, connection):
     headers = ['build_id', 'longitude', 'latitude']
     mydata = pd.DataFrame(columns=headers)
     end_date = start_date + datetime.timedelta(days=7)
 
-    df = pd.read_csv('data/parser_data.csv')
+    df = pd.read_sql_table('dataframe', con=connection)
     df['start_date'] = pd.to_datetime(df['start_date'], format='%d-%m-%Y', errors='coerce')
     df['end_date'] = pd.to_datetime(df['end_date'], format='%d-%m-%Y', errors='coerce')
 
@@ -21,7 +23,7 @@ def date_filter(start_date):
 
     res = start_slice["address"].tolist()
     for i in res:
-        x = i.strip("']['").split("', '")
+        x = i.strip('"}{"').split('","')
         if len(x) == 1:
             x = x[0].split(', ')
         for j in x:
@@ -38,9 +40,9 @@ def date_filter(start_date):
             if len(new_string) == len(headers):
                 length = len(mydata)
                 mydata.loc[length] = new_string
-    mydata.to_csv('data/build_ids.csv', index=False)
+    mydata.to_sql('build_ids', con=connection, if_exists='replace')
 
 
 if __name__ == "__main__":
-    date_filter(datetime.datetime.now())
-
+    with engine.connect() as conn:
+        date_filter(datetime.datetime.now(), conn)
