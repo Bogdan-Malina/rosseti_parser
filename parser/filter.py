@@ -23,23 +23,24 @@ def date_filter(start_date, connection):
 
     res = start_slice["address"].tolist()
     for i in res:
-        x = i.strip('"}{"').split('","')
-        if len(x) == 1:
-            x = x[0].split(', ')
-        for j in x:
-            new_string = []
-            geocode_url = "https://geocode.gate.petersburg.ru/parse/free?street={0}".format(
-                quote(j)
-            )
-            with request.urlopen(geocode_url) as geocode_res:
-                json_res = json.load(geocode_res)
-                if json_res.get('Building_ID'):
-                    new_string.append(json_res['Building_ID'])
-                    new_string.append(json_res['Longitude'])
-                    new_string.append(json_res['Latitude'])
-            if len(new_string) == len(headers):
-                length = len(mydata)
-                mydata.loc[length] = new_string
+        if i:
+            x = i.strip('"}{"').split('","')
+            if len(x) == 1:
+                x = x[0].split(', ')
+            for j in x:
+                new_string = []
+                geocode_url = "https://geocode.gate.petersburg.ru/parse/free?street={0}".format(
+                    quote(j)
+                )
+                with request.urlopen(geocode_url) as geocode_res:
+                    json_res = json.load(geocode_res)
+                    if json_res.get('Building_ID'):
+                        new_string.append(json_res['Building_ID'])
+                        new_string.append(json_res['Longitude'])
+                        new_string.append(json_res['Latitude'])
+                if len(new_string) == len(headers):
+                    length = len(mydata)
+                    mydata.loc[length] = new_string
     mydata.to_sql('build_ids', con=connection, if_exists='replace')
 
 
